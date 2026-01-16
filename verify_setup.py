@@ -16,7 +16,13 @@ def verify_imports():
 
     try:
         import chainlit
-        print("  ✅ chainlit")
+        print(f"  ✅ chainlit (version {chainlit.__version__})")
+
+        # Check for Chainlit 2.x
+        major_version = int(chainlit.__version__.split('.')[0])
+        if major_version < 2:
+            print(f"     ⚠️  Warning: Chainlit {chainlit.__version__} is older than 2.x")
+            print(f"     This app requires Chainlit 2.x for audio features")
     except ImportError as e:
         print(f"  ❌ chainlit: {e}")
         return False
@@ -44,7 +50,13 @@ def verify_imports():
 
     try:
         import pydantic
-        print("  ✅ pydantic")
+        print(f"  ✅ pydantic (version {pydantic.VERSION})")
+
+        # Check for Pydantic 2.x
+        major_version = int(pydantic.VERSION.split('.')[0])
+        if major_version < 2:
+            print(f"     ⚠️  Warning: Pydantic {pydantic.VERSION} is older than 2.x")
+            print(f"     Chainlit 2.x works best with Pydantic 2.x")
     except ImportError as e:
         print(f"  ❌ pydantic: {e}")
         return False
@@ -106,20 +118,70 @@ def verify_services():
         return False
 
 
+def verify_chainlit_config():
+    """Verify .chainlit/config.toml exists and has Chainlit 2.x audio settings."""
+    print("\nChecking .chainlit/config.toml...")
+
+    config_path = ".chainlit/config.toml"
+
+    if not os.path.exists(config_path):
+        print(f"  ❌ {config_path} does NOT exist")
+        print(f"     This file is MANDATORY!")
+        return False
+
+    print(f"  ✅ {config_path} exists")
+
+    # Read and check for Chainlit 2.x audio config
+    try:
+        with open(config_path, 'r') as f:
+            config_content = f.read()
+
+        # Check for Chainlit 2.x version marker
+        if 'generated_by = "2.' in config_content:
+            print(f"  ✅ Chainlit 2.x config detected")
+        else:
+            print(f"  ⚠️  Warning: Config may be from Chainlit 1.x")
+
+        # Check for [features.audio] section
+        if '[features.audio]' not in config_content:
+            print(f"  ❌ {config_path} does NOT contain [features.audio] section")
+            print(f"     Audio section is REQUIRED!")
+            return False
+
+        print(f"  ✅ Contains [features.audio] section")
+
+        # Check if audio is enabled
+        if 'enabled = true' in config_content:
+            print(f"  ✅ Audio is enabled")
+        else:
+            print(f"  ⚠️  Warning: Audio may be disabled (check [features.audio] enabled setting)")
+
+        return True
+    except Exception as e:
+        print(f"  ❌ Error reading config: {e}")
+        return False
+
+
 def main():
     """Run all verification checks."""
     print("=" * 60)
-    print("ENVIRONMENT VERIFICATION")
+    print("ENVIRONMENT VERIFICATION (Chainlit 2.x)")
     print("=" * 60)
+
+    # Show Python version
+    import sys
+    print(f"\nPython version: {sys.version.split()[0]}")
+    print()
 
     imports_ok = verify_imports()
     env_ok = verify_environment()
     config_ok = verify_config()
     services_ok = verify_services()
+    chainlit_config_ok = verify_chainlit_config()
 
     print("\n" + "=" * 60)
 
-    if imports_ok and env_ok and config_ok and services_ok:
+    if imports_ok and env_ok and config_ok and services_ok and chainlit_config_ok:
         print("✅ Environment OK")
         print("=" * 60)
         print("\nYou can now run: chainlit run app.py -w")
@@ -131,6 +193,7 @@ def main():
         print("Make sure to:")
         print("  1. Install dependencies: pip install -r requirements.txt")
         print("  2. Copy .env.example to .env and add your API keys")
+        print("  3. Ensure .chainlit/config.toml exists with proper audio settings")
         return 1
 
 

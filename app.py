@@ -65,11 +65,11 @@ async def on_message(message: cl.Message):
 
 
 @cl.on_audio_chunk
-async def on_audio_chunk(chunk):
+async def on_audio_chunk(chunk: cl.InputAudioChunk):
     """Handle incoming audio chunks during recording."""
     # Get or initialize audio buffer
     audio_buffer = cl.user_session.get("audio_buffer", [])
-    # Extract the actual bytes data from the AudioChunk object
+    # Append the raw audio data from the chunk
     audio_buffer.append(chunk.data)
     cl.user_session.set("audio_buffer", audio_buffer)
 
@@ -77,7 +77,7 @@ async def on_audio_chunk(chunk):
 @cl.on_audio_end
 async def on_audio_end():
     """Process completed audio recording."""
-    # Get audio buffer
+    # Get buffered audio data
     audio_buffer = cl.user_session.get("audio_buffer", [])
 
     if not audio_buffer:
