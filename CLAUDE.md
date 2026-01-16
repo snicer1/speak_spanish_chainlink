@@ -1,7 +1,7 @@
 # Project Guidelines & Architecture
 
 ## Tech Stack
-- **Framework:** Chainlit (Python)
+- **Framework:** Chainlit 2.9.5 (Python 3.13)
 - **TTS:** ElevenLabs (Critical)
 - **STT:** OpenAI Whisper
 - **Config:** `.chainlit/config.toml` (REQUIRED for audio behavior)
@@ -10,23 +10,36 @@
 
 1. **Audio Behavior ("Push-to-Talk"):**
    - The user speaks slowly. The bot MUST NOT submit automatically on silence.
-   - **MANDATORY FILE:** You must create `.chainlit/config.toml`.
-   - **MANDATORY SETTINGS in TOML:**
+   - **MANDATORY FILE:** `.chainlit/config.toml` must exist.
+   - **CHAINLIT 2.x LIMITATION:** The config parameters `min_decibels`, `silence_timeout`, and `chunk_duration` were REMOVED in Chainlit 2.0. Only `enabled` and `sample_rate` are supported.
+   - **REQUIRED SETTINGS in TOML:**
      ```toml
      [features.audio]
-     min_decibels = -100     # Force mic to stay open
-     silence_timeout = 500000 # Wait 500,000ms (8 minutes) for silence
-     chunk_duration = 3000
+     enabled = true
+     sample_rate = 24000
+     min_decibels = -100     # NOT SUPPORTED in 2.x (documented only)
+     silence_timeout = 500000 # NOT SUPPORTED in 2.x (documented only)
+     chunk_duration = 3000    # NOT SUPPORTED in 2.x (documented only)
      ```
-   - **Code:** Use `@cl.on_audio_end`. Do NOT use `@cl.on_audio_chunk`.
+   - **Code Requirements:**
+     - MUST implement `@cl.on_audio_start` (returns True to enable audio)
+     - MUST implement `@cl.on_audio_chunk` to buffer audio data
+     - MUST implement `@cl.on_audio_end` to process buffered audio
+   - **EngineIO Fix:** Must set `Payload.max_decode_packets = 500` before importing Chainlit to handle audio streaming
 
-2. **No Custom JS Hacks:** - DELETE `public/script.js` if it exists. Rely purely on the TOML config above.
+2. **Custom JavaScript (REQUIRED WORKAROUND):**
+   - Since Chainlit 2.x removed audio config parameters, we MUST use custom JavaScript
+   - **File:** `public/audio-control.js` implements push-to-talk behavior
+   - **Config:** Set `custom_js = "/public/audio-control.js"` in config.toml
+   - This overrides the default auto-stop behavior
 
 3. **Verification Protocol:**
-   - Update `verify_setup.py` to explicitly check if `.chainlit/config.toml` exists AND contains `silence_timeout`.
-   - If the file is missing, the script must fail.
+   - `verify_setup.py` checks if `.chainlit/config.toml` exists
+   - Verifies Chainlit 2.x version (2.9.5+)
+   - Verifies Pydantic 2.x version (2.12.5+)
+   - Verifies Python 3.13 (Python 3.14+ has asyncio incompatibilities)
 
 4. **User Experience:**
-   - User clicks Mic -> Starts recording.
-   - User clicks Stop Square -> Stops and sends.
-   - No auto-sending.
+   - User clicks Mic -> Starts recording
+   - User clicks Stop Square -> Stops and sends
+   - No auto-sending on silence (enforced via custom JS)

@@ -3,6 +3,8 @@ Business logic and OpenAI API wrappers.
 Pure logic with no UI code - all Chainlit decorators are in app.py.
 """
 
+import wave
+from io import BytesIO
 from openai import AsyncOpenAI
 from elevenlabs.client import ElevenLabs
 from config import Config
@@ -55,20 +57,49 @@ async def text_to_speech(text: str) -> bytes:
     return audio_bytes
 
 
-async def speech_to_text(audio_data: bytes) -> str:
+def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, channels: int = 1, sample_width: int = 2) -> bytes:
+    """
+    Convert raw PCM audio data to WAV format.
+
+    Args:
+        pcm_data: Raw PCM audio bytes (16-bit signed integers)
+        sample_rate: Sample rate in Hz (default: 24000 for Chainlit 2.x)
+        channels: Number of audio channels (default: 1 for mono)
+        sample_width: Bytes per sample (default: 2 for 16-bit)
+
+    Returns:
+        WAV formatted audio data as bytes
+    """
+    wav_buffer = BytesIO()
+    with wave.open(wav_buffer, 'wb') as wav_file:
+        wav_file.setnchannels(channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(pcm_data)
+
+    wav_buffer.seek(0)
+    return wav_buffer.read()
+
+
+async def speech_to_text(pcm_data: bytes) -> str:
     """
     Convert speech to text using OpenAI Whisper.
     Forces Spanish language detection.
 
+    Chainlit 2.x sends raw PCM audio data (16-bit, 24000 Hz, mono).
+    We need to convert it to WAV format before sending to OpenAI.
+
     Args:
-        audio_data: Audio data as bytes
+        pcm_data: Raw PCM audio data from Chainlit InputAudioChunk
 
     Returns:
         Transcribed text
     """
-    # Create a file-like object from bytes
-    from io import BytesIO
-    audio_file = BytesIO(audio_data)
+    # Convert raw PCM to WAV format
+    wav_data = pcm_to_wav(pcm_data, sample_rate=24000, channels=1, sample_width=2)
+
+    # Create a file-like object from WAV bytes
+    audio_file = BytesIO(wav_data)
     audio_file.name = "audio.wav"
 
     response = await client.audio.transcriptions.create(

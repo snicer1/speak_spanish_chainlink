@@ -4,6 +4,11 @@ All UI decorators and event handlers are here.
 Business logic is in services.py.
 """
 
+# Fix engineio packet limit for audio streaming
+# Must be set BEFORE importing chainlit
+from engineio.payload import Payload
+Payload.max_decode_packets = 500
+
 import chainlit as cl
 from config import Config
 from services import get_chat_completion, text_to_speech, speech_to_text
@@ -62,6 +67,13 @@ async def on_message(message: cl.Message):
         ).send()
     except Exception as e:
         print(f"Error generating audio: {e}")
+
+
+@cl.on_audio_start
+async def on_audio_start():
+    """Initialize audio session - required for Chainlit 2.x."""
+    # Return True to enable audio connection
+    return True
 
 
 @cl.on_audio_chunk
