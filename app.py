@@ -19,7 +19,7 @@ async def on_chat_start():
 
     # Send welcome message
     await cl.Message(
-        content="¡Hola! I'm your Spanish tutor. Click the green 'Start Recording' button to speak, or type your message. Let's practice!"
+        content="¡Hola! I'm your Spanish tutor. Click the microphone button to speak, or type your message. Let's practice!"
     ).send()
 
 

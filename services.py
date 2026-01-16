@@ -4,11 +4,15 @@ Pure logic with no UI code - all Chainlit decorators are in app.py.
 """
 
 from openai import AsyncOpenAI
+from elevenlabs.client import ElevenLabs
 from config import Config
 
 
 # Initialize OpenAI client
 client = AsyncOpenAI(api_key=Config.OPENAI_API_KEY)
+
+# Initialize ElevenLabs client
+elevenlabs_client = ElevenLabs(api_key=Config.ELEVENLABS_API_KEY)
 
 
 async def get_chat_completion(messages: list) -> str:
@@ -30,7 +34,7 @@ async def get_chat_completion(messages: list) -> str:
 
 async def text_to_speech(text: str) -> bytes:
     """
-    Convert text to speech using OpenAI TTS.
+    Convert text to speech using ElevenLabs.
 
     Args:
         text: The text to convert to speech
@@ -38,13 +42,17 @@ async def text_to_speech(text: str) -> bytes:
     Returns:
         Audio data as bytes (MP3 format)
     """
-    response = await client.audio.speech.create(
-        model=Config.TTS_MODEL,
-        voice=Config.TTS_VOICE,
-        input=text,
-        speed=Config.TTS_SPEED
+    # ElevenLabs generate returns an iterator of audio chunks
+    # We need to collect all chunks into bytes
+    audio_generator = elevenlabs_client.generate(
+        text=text,
+        voice=Config.ELEVENLABS_VOICE_ID,
+        model=Config.ELEVENLABS_MODEL
     )
-    return response.content
+
+    # Collect all audio chunks
+    audio_bytes = b"".join(audio_generator)
+    return audio_bytes
 
 
 async def speech_to_text(audio_data: bytes) -> str:
