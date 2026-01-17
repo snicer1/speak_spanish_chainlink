@@ -44,12 +44,13 @@ async def text_to_speech(text: str) -> bytes:
     Returns:
         Audio data as bytes (MP3 format)
     """
-    # ElevenLabs generate returns an iterator of audio chunks
-    # We need to collect all chunks into bytes
-    audio_generator = elevenlabs_client.generate(
+    # ElevenLabs SDK 2.x uses text_to_speech.convert()
+    # Returns an iterator of audio chunks
+    audio_generator = elevenlabs_client.text_to_speech.convert(
         text=text,
-        voice=Config.ELEVENLABS_VOICE_ID,
-        model=Config.ELEVENLABS_MODEL
+        voice_id=Config.ELEVENLABS_VOICE_ID,
+        model_id=Config.ELEVENLABS_MODEL,
+        output_format="mp3_44100_128"
     )
 
     # Collect all audio chunks

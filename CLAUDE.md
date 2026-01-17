@@ -43,3 +43,33 @@
    - User clicks Mic -> Starts recording
    - User clicks Stop Square -> Stops and sends
    - No auto-sending on silence (enforced via custom JS)
+
+## Development Agents
+- **Audio Expert:** Handles `public/audio-control.js` and strict "Push-to-Talk" rules.
+- **Tutor Architect:** Manages `services.py` and `config.py` for LLM personality and voice synthesis.
+- **Guardian:** Runs `verify_setup.py` and checks dependencies.
+
+## MCP Tools & External Knowledge
+- **Context 7:** ALWAYS use this to fetch docs for `chainlit` (v2.x changes rapidly) and `elevenlabs`.
+  - *Rule:* Before writing Chainlit audio code, query Context 7 for "latest chainlit audio handling 2.x".
+- **Playwright:** Used by QA Agent to verify frontend behavior, specifically the custom `audio-control.js`.
+
+## Agent Roles (Sub-agents)
+
+### 🕵️ QA Engineer (Frontend Tester)
+- **Trigger:** Invoked when changes are made to `public/audio-control.js`, `app.py` (UI section), or `.chainlit/config.toml`.
+- **Tools:** Playwright (MCP).
+- **Mandatory Test Scenario (The "Push-to-Talk" Check):**
+  1. Open the app in a browser (headless or headed).
+  2. Wait for `audio-control.js` console logs ("Script loaded").
+  3. Verify the microphone button exists.
+  4. **Critical:** Simulate "Hold Click" on Mic -> Verify recording starts.
+  5. **Critical:** Simulate "Release Click" -> Verify recording stops and sends.
+  6. Ensure no auto-sending happens on silence before release.
+
+### 🏗️ Audio Expert (Frontend Audio)
+- **Focus:** `public/audio-control.js` logic and EngineIO settings.
+- **Rule:** Must coordinate with QA Engineer to verify fixes.
+
+### 🎓 Tutor Logic (Backend)
+- **Focus:** `services.py`, `config.py` (Prompts).
