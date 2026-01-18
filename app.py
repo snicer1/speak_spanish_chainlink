@@ -10,6 +10,7 @@ from engineio.payload import Payload
 Payload.max_decode_packets = 500
 
 import chainlit as cl
+from pathlib import Path
 from config import Config
 from services import get_chat_completion, text_to_speech, speech_to_text
 
@@ -41,8 +42,33 @@ async def on_message(message: cl.Message):
     if len(message_history) > Config.MAX_HISTORY_MESSAGES + 1:
         message_history = [message_history[0]] + message_history[-(Config.MAX_HISTORY_MESSAGES):]
 
-    # Get AI response
-    response_text = await get_chat_completion(message_history)
+    # Show progress indicator during processing
+    async with cl.Step(name="Thinking") as step:
+        # Get AI response
+        response_text = await get_chat_completion(message_history)
+
+        # Generate audio response
+        try:
+            audio_data = await text_to_speech(response_text)
+
+            # Ensure public directory exists
+            Path("public").mkdir(exist_ok=True)
+
+            # Save audio to file
+            audio_path = "public/output.mp3"
+            with open(audio_path, "wb") as f:
+                f.write(audio_data)
+
+            # Create audio element with path
+            audio_element = cl.Audio(
+                name="response",
+                path=audio_path,
+                display="inline",
+                auto_play=True
+            )
+        except Exception as e:
+            print(f"Error generating audio: {e}")
+            audio_element = None
 
     # Add assistant response to history
     message_history.append({"role": "assistant", "content": response_text})
@@ -50,23 +76,13 @@ async def on_message(message: cl.Message):
     # Update session
     cl.user_session.set("message_history", message_history)
 
-    # Send text response
-    await cl.Message(content=response_text).send()
-
-    # Generate and send audio response
-    try:
-        audio_data = await text_to_speech(response_text)
-        audio_element = cl.Audio(
-            content=audio_data,
-            mime="audio/mpeg",
-            name="response.mp3"
-        )
-        await cl.Message(
-            content="",
-            elements=[audio_element]
-        ).send()
-    except Exception as e:
-        print(f"Error generating audio: {e}")
+    # Send single message with text and audio
+    elements = [audio_element] if audio_element else []
+    await cl.Message(
+        content=response_text,
+        elements=elements,
+        author="Profesor"
+    ).send()
 
 
 @cl.on_audio_start
@@ -105,6 +121,13 @@ async def on_audio_end():
     try:
         transcribed_text = await speech_to_text(audio_data)
 
+        # Send user's transcription as a user message
+        await cl.Message(
+            content=transcribed_text,
+            author="user",
+            type="user_message"
+        ).send()
+
         # Get message history
         message_history = cl.user_session.get("message_history")
 
@@ -115,8 +138,33 @@ async def on_audio_end():
         if len(message_history) > Config.MAX_HISTORY_MESSAGES + 1:
             message_history = [message_history[0]] + message_history[-(Config.MAX_HISTORY_MESSAGES):]
 
-        # Get AI response
-        response_text = await get_chat_completion(message_history)
+        # Show progress indicator during processing
+        async with cl.Step(name="Thinking") as step:
+            # Get AI response
+            response_text = await get_chat_completion(message_history)
+
+            # Generate audio response
+            try:
+                audio_bytes = await text_to_speech(response_text)
+
+                # Ensure public directory exists
+                Path("public").mkdir(exist_ok=True)
+
+                # Save audio to file
+                audio_path = "public/output.mp3"
+                with open(audio_path, "wb") as f:
+                    f.write(audio_bytes)
+
+                # Create audio element with path
+                audio_element = cl.Audio(
+                    name="response",
+                    path=audio_path,
+                    display="inline",
+                    auto_play=True
+                )
+            except Exception as e:
+                print(f"Error generating audio: {e}")
+                audio_element = None
 
         # Add assistant response to history
         message_history.append({"role": "assistant", "content": response_text})
@@ -124,28 +172,17 @@ async def on_audio_end():
         # Update session
         cl.user_session.set("message_history", message_history)
 
-        # Send transcription
-        msg = cl.Message(content=f"You said: {transcribed_text}")
-        await msg.send()
-
-        # Send text response
-        msg = cl.Message(content=response_text)
-        await msg.send()
-
-        # Generate and send audio response
-        try:
-            audio_data = await text_to_speech(response_text)
-            audio_element = cl.Audio(
-                content=audio_data,
-                mime="audio/mpeg",
-                name="response.mp3"
-            )
-            msg = cl.Message(content="", elements=[audio_element])
-            await msg.send()
-        except Exception as e:
-            print(f"Error generating audio: {e}")
+        # Send single message with text and audio
+        elements = [audio_element] if audio_element else []
+        await cl.Message(
+            content=response_text,
+            elements=elements,
+            author="Profesor"
+        ).send()
 
     except Exception as e:
         print(f"Error processing audio: {e}")
-        msg = cl.Message(content="Sorry, I couldn't process your audio. Please try again.")
-        await msg.send()
+        await cl.Message(
+            content="Sorry, I couldn't process your audio. Please try again.",
+            author="Profesor"
+        ).send()

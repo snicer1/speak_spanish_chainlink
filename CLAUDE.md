@@ -73,3 +73,10 @@
 
 ### 🎓 Tutor Logic (Backend)
 - **Focus:** `services.py`, `config.py` (Prompts).
+
+
+## UI/UX & Frontend Rules (STRICT)
+1. **Chat Layout (WhatsApp Style):**
+   - User messages MUST be aligned to the RIGHT (Green/Blue bubble).
+   - Assistant messages MUST be aligned to the LEFT (Gray/Neutral bubble).
+   - The chat container must be centered and limited in width (max-width: 800px) to simulate a focused conversation module.

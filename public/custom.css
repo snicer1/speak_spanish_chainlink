@@ -1,0 +1,356 @@
+/* ======================================
+   SPANISH TUTOR CHAT APP STYLING
+   Override Chainlit's CSS Variables for Dark Theme
+   ====================================== */
+
+/* ===== OVERRIDE CHAINLIT'S CSS VARIABLES ===== */
+:root,
+.dark,
+[data-theme="dark"],
+html {
+    /* Background colors */
+    --background: 222.2 84% 4.9% !important;
+    --foreground: 210 40% 98% !important;
+    
+    /* Card/Muted backgrounds - for message bubbles */
+    --card: 222.2 84% 8% !important;
+    --card-foreground: 210 40% 98% !important;
+    --muted: 217.2 32.6% 17.5% !important;
+    --muted-foreground: 215 20.2% 75.1% !important;
+    
+    /* Secondary colors */
+    --secondary: 217.2 32.6% 17.5% !important;
+    --secondary-foreground: 210 40% 98% !important;
+    
+    /* Accent colors */
+    --accent: 217.2 32.6% 17.5% !important;
+    --accent-foreground: 210 40% 98% !important;
+    
+    /* Primary colors (for user messages) */
+    --primary: 262.1 83.3% 57.8% !important;
+    --primary-foreground: 210 40% 98% !important;
+    
+    /* Border and input */
+    --border: 217.2 32.6% 25% !important;
+    --input: 217.2 32.6% 17.5% !important;
+    --ring: 262.1 83.3% 57.8% !important;
+    
+    /* Popover */
+    --popover: 222.2 84% 8% !important;
+    --popover-foreground: 210 40% 98% !important;
+}
+
+/* ===== CUSTOM THEME VARIABLES ===== */
+:root {
+    /* Dark Theme Colors */
+    --chat-bg-primary: #0f0f14;
+    --chat-bg-secondary: #1e293b;
+    --chat-bg-tertiary: #334155;
+    
+    /* Text Colors - High Contrast */
+    --chat-text-primary: #ffffff;
+    --chat-text-secondary: #e2e8f0;
+    --chat-text-muted: #94a3b8;
+    
+    /* Accent Colors - Neon Gradient */
+    --chat-accent-start: #667eea;
+    --chat-accent-end: #764ba2;
+    --chat-accent-glow: rgba(102, 126, 234, 0.4);
+    
+    /* Assistant bubble */
+    --chat-assistant-bg: #1e293b;
+    --chat-assistant-border: rgba(100, 116, 139, 0.3);
+    
+    /* Spacing */
+    --chat-message-gap: 16px;
+    --chat-bubble-padding-x: 16px;
+    --chat-bubble-padding-y: 12px;
+    --chat-bubble-min-width: 60px;
+    --chat-bubble-max-width: 75%;
+    
+    /* Border Radius */
+    --chat-radius-bubble: 18px;
+    --chat-radius-input: 24px;
+}
+
+/* ===== MESSAGE STEPS ===== */
+.step {
+    margin-bottom: var(--chat-message-gap) !important;
+}
+
+/* ===== USER MESSAGES (Right-aligned) ===== */
+.step:has(.bg-accent) {
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+/* User message bubble - Purple gradient */
+.bg-accent {
+    background: linear-gradient(135deg, var(--chat-accent-start) 0%, var(--chat-accent-end) 100%) !important;
+    color: var(--chat-text-primary) !important;
+    border-radius: var(--chat-radius-bubble) var(--chat-radius-bubble) 4px var(--chat-radius-bubble) !important;
+    padding: var(--chat-bubble-padding-y) var(--chat-bubble-padding-x) !important;
+    box-shadow: 0 4px 16px var(--chat-accent-glow) !important;
+    max-width: var(--chat-bubble-max-width) !important;
+    min-width: var(--chat-bubble-min-width) !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+}
+
+.step[data-step-type="user_message"] {
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+/* User message text - WHITE */
+.bg-accent .prose,
+.bg-accent .prose p,
+.bg-accent p,
+.step[data-step-type="user_message"] .prose,
+.step[data-step-type="user_message"] .prose p,
+.step[data-step-type="user_message"] p {
+    color: var(--chat-text-primary) !important;
+    margin: 0 !important;
+}
+
+/* ===== ASSISTANT MESSAGES - DARK BACKGROUND ===== */
+/* Target the message bubble container */
+.step:not([data-step-type="user_message"]) .rounded-2xl,
+.step:not([data-step-type="user_message"]) .rounded-xl,
+.step:not([data-step-type="user_message"]) .rounded-lg,
+.step:not(:has(.bg-accent)) .rounded-2xl,
+.step:not(:has(.bg-accent)) .rounded-xl,
+.step:not(:has(.bg-accent)) .rounded-lg {
+    background: var(--chat-assistant-bg) !important;
+    background-color: var(--chat-assistant-bg) !important;
+    border: 1px solid var(--chat-assistant-border) !important;
+    color: var(--chat-text-secondary) !important;
+}
+
+/* Target bg-muted which Chainlit uses for assistant messages */
+.bg-muted,
+[class*="bg-muted"],
+.bg-card,
+[class*="bg-card"],
+.bg-secondary,
+[class*="bg-secondary"] {
+    background: var(--chat-assistant-bg) !important;
+    background-color: var(--chat-assistant-bg) !important;
+    color: var(--chat-text-secondary) !important;
+}
+
+/* Assistant message text - HIGH CONTRAST */
+.step:not([data-step-type="user_message"]) .prose,
+.step:not([data-step-type="user_message"]) .prose p,
+.step:not([data-step-type="user_message"]) p:not([class*="text-muted"]),
+.step:not(:has(.bg-accent)) .prose,
+.step:not(:has(.bg-accent)) .prose p {
+    color: var(--chat-text-secondary) !important;
+    margin: 0 !important;
+    line-height: 1.6 !important;
+}
+
+/* ===== WELCOME MESSAGE ===== */
+.step:first-child .rounded-2xl,
+.step:first-child .rounded-xl,
+.step:first-child .rounded-lg {
+    max-width: 90% !important;
+    text-align: center !important;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%) !important;
+    border: 1px solid rgba(102, 126, 234, 0.3) !important;
+    border-radius: var(--chat-radius-bubble) !important;
+    padding: 20px 24px !important;
+}
+
+/* ===== HIDE THINKING STEP ===== */
+#step-Thinking,
+p[id^="step-"][id*="hinking"] {
+    display: none !important;
+}
+
+/* ===== AUDIO PLAYER ===== */
+audio {
+    max-width: 100% !important;
+    margin-top: 10px !important;
+    border-radius: 8px !important;
+    height: 40px !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ===== HIDE AVATARS ===== */
+.step img[alt*="avatar" i],
+.avatar {
+    display: none !important;
+}
+
+/* ===== INPUT AREA ===== */
+/* Input container - centered at bottom */
+.flex.flex-col.gap-2 {
+    max-width: 700px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    padding: 16px !important;
+}
+
+/* Input field */
+textarea,
+input[type="text"] {
+    border-radius: 20px !important;
+    padding: 12px 18px !important;
+    font-size: 15px !important;
+    background: var(--chat-bg-secondary) !important;
+    background-color: var(--chat-bg-secondary) !important;
+    color: var(--chat-text-primary) !important;
+    border: 1px solid var(--chat-assistant-border) !important;
+}
+
+textarea::placeholder,
+input::placeholder {
+    color: var(--chat-text-muted) !important;
+}
+
+textarea:focus,
+input:focus {
+    border-color: var(--chat-accent-start) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+}
+
+/* ===== SEND BUTTON ===== */
+button[type="submit"] {
+    background: linear-gradient(135deg, var(--chat-accent-start) 0%, var(--chat-accent-end) 100%) !important;
+    color: var(--chat-text-primary) !important;
+    border-radius: 50% !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    box-shadow: 0 4px 12px var(--chat-accent-glow) !important;
+    border: none !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+button[type="submit"]:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5) !important;
+}
+
+/* ===== MESSAGES CONTAINER ===== */
+.flex.flex-col.flex-grow.overflow-y-auto {
+    max-width: 750px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    padding: 20px !important;
+    padding-bottom: 100px !important;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 3px !important;
+}
+
+/* ===== RESPONSE LABEL ===== */
+p[class*="text-muted"] {
+    color: var(--chat-text-muted) !important;
+    font-size: 12px !important;
+    margin-bottom: 6px !important;
+}
+
+/* ===== COPY BUTTON ===== */
+button[aria-label*="copy" i] {
+    opacity: 0.5 !important;
+    color: var(--chat-text-muted) !important;
+}
+
+button[aria-label*="copy" i]:hover {
+    opacity: 1 !important;
+    color: var(--chat-accent-start) !important;
+}
+
+/* ===== FORCE DARK BACKGROUNDS ===== */
+/* Override ALL white/light backgrounds */
+.bg-white,
+.bg-gray-50,
+.bg-gray-100,
+.bg-gray-200,
+.bg-slate-50,
+.bg-slate-100,
+.bg-slate-200,
+[class*="bg-white"],
+[class*="bg-gray-5"],
+[class*="bg-gray-1"],
+[class*="bg-gray-2"],
+[class*="bg-slate-5"],
+[class*="bg-slate-1"],
+[class*="bg-slate-2"],
+[style*="background-color: white"],
+[style*="background-color: #fff"],
+[style*="background-color: rgb(255"] {
+    background: var(--chat-assistant-bg) !important;
+    background-color: var(--chat-assistant-bg) !important;
+    color: var(--chat-text-secondary) !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .bg-accent,
+    .step:not([data-step-type="user_message"]) .rounded-2xl,
+    .step:not([data-step-type="user_message"]) .rounded-xl {
+        max-width: 85% !important;
+        padding: 10px 14px !important;
+    }
+
+    .flex.flex-col.flex-grow.overflow-y-auto {
+        padding: 16px !important;
+        padding-bottom: 90px !important;
+    }
+
+    .flex.flex-col.gap-2 {
+        padding: 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .bg-accent,
+    .step:not([data-step-type="user_message"]) .rounded-2xl,
+    .step:not([data-step-type="user_message"]) .rounded-xl {
+        max-width: 90% !important;
+    }
+
+    .step:first-child .rounded-2xl,
+    .step:first-child .rounded-xl {
+        padding: 16px 18px !important;
+    }
+}
+
+/* ===== LINKS ===== */
+a {
+    color: var(--chat-accent-start) !important;
+}
+
+a:hover {
+    color: var(--chat-accent-end) !important;
+}
+
+/* ===== CODE ===== */
+code {
+    background: rgba(0, 0, 0, 0.3) !important;
+    color: var(--chat-text-secondary) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+}
+
+pre {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid var(--chat-assistant-border) !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
