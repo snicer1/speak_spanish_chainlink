@@ -8,6 +8,8 @@ from io import BytesIO
 from openai import AsyncOpenAI
 from elevenlabs.client import ElevenLabs
 from config import Config
+import deepl
+from typing import Optional
 
 
 # Initialize OpenAI client
@@ -15,6 +17,11 @@ client = AsyncOpenAI(api_key=Config.OPENAI_API_KEY)
 
 # Initialize ElevenLabs client
 elevenlabs_client = ElevenLabs(api_key=Config.ELEVENLABS_API_KEY)
+
+# Initialize DeepL translator (will be None if API key not set)
+deepl_translator = None
+if Config.DEEPL_API_KEY:
+    deepl_translator = deepl.Translator(Config.DEEPL_API_KEY)
 
 
 async def get_chat_completion(messages: list) -> str:
@@ -109,3 +116,53 @@ async def speech_to_text(pcm_data: bytes) -> str:
         language="es"  # Force Spanish language detection
     )
     return response.text
+
+
+async def get_translation(text: str, target_lang: str = "ES") -> str:
+    """
+    Get translation with database caching.
+
+    Flow:
+    1. Check database cache for existing translation
+    2. If not found, call DeepL API
+    3. Save result to database
+    4. Return translation
+
+    Args:
+        text: The text to translate
+        target_lang: Target language code (e.g., 'ES' for Spanish, 'EN' for English)
+
+    Returns:
+        The translated text
+
+    Raises:
+        ValueError: If DeepL API key is not configured
+        RuntimeError: If database is not connected
+    """
+    # Import db here to avoid circular imports
+    from database import db
+
+    if not db:
+        raise RuntimeError("Database not connected. Initialize database in main.py")
+
+    if not deepl_translator:
+        raise ValueError("DeepL API key not configured. Set DEEPL_API_KEY in environment.")
+
+    # Normalize language code (DeepL uses uppercase)
+    target_lang = target_lang.upper()
+
+    # Check cache first
+    cached_translation = await db.get_cached_translation(text, target_lang)
+    if cached_translation:
+        print(f"Cache hit for: {text[:50]}...")
+        return cached_translation
+
+    # Cache miss - call DeepL API
+    print(f"Cache miss - calling DeepL API for: {text[:50]}...")
+    result = deepl_translator.translate_text(text, target_lang=target_lang)
+    translation = result.text
+
+    # Save to cache
+    await db.save_translation(text, target_lang, translation)
+
+    return translation

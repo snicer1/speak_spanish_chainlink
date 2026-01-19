@@ -16,6 +16,11 @@ class Config:
     # API Configuration
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+    DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
+
+    # Database Configuration
+    MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    DB_TYPE = os.getenv("DB_TYPE", "mongodb")
 
     # Model Settings
     CHAT_MODEL = "gpt-4o-mini"

@@ -12,3 +12,13 @@ python-dotenv>=1.2.0
 
 # Pydantic 2.x (required for Chainlit 2.x)
 pydantic>=2.12.0
+
+# FastAPI & Web Server
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Async MongoDB Driver
+motor>=3.6.0
+
+# DeepL Translation API
+deepl>=1.19.0
