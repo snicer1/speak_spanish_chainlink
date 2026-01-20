@@ -61,3 +61,15 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Node.js / Playwright
+node_modules/
+package-lock.json
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Test Reports (keep only README.md)
+reports/**/*
+!reports/README.md
+!reports/**/README.md

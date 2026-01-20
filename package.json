@@ -1,0 +1,35 @@
+{
+  "name": "speak-spanish-chainlink",
+  "version": "1.0.0",
+  "description": "Spanish Learning App with Chainlit UI, FastAPI backend, and E2E tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=ui",
+    "test:smoke": "playwright test tests/api/smoke.spec.ts",
+    "test:contract": "playwright test tests/api/contract.spec.ts",
+    "test:a11y": "playwright test tests/ui/accessibility.spec.ts",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "playwright:install": "playwright install chromium",
+    "verify:ux": "playwright test tests/ui/ux-verification.spec.ts --reporter=list",
+    "verify:api": "playwright test tests/api/contract.spec.ts --reporter=list",
+    "verify:all": "npm run verify:api && npm run verify:ux",
+    "verify:all:parallel": "concurrently \"npm run verify:api\" \"npm run verify:ux\""
+  },
+  "keywords": [
+    "chainlit",
+    "fastapi",
+    "playwright",
+    "testing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.57.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

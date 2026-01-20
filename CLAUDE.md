@@ -45,9 +45,13 @@
    - No auto-sending on silence (enforced via custom JS)
 
 ## Development Agents
+- **UX Verifier:** Validates UI/UX with Playwright + Axe Core (`.claude/agents/ux-verifier.md`)
+- **API Verifier:** Validates API contracts with AJV + OpenAPI schema (`.claude/agents/api-verifier.md`)
 - **Audio Expert:** Handles `public/audio-control.js` and strict "Push-to-Talk" rules.
 - **Tutor Architect:** Manages `services.py` and `config.py` for LLM personality and voice synthesis.
 - **Guardian:** Runs `verify_setup.py` and checks dependencies.
+
+**📋 For detailed verification workflows, triggers, and error handling, see:** `.claude/project_instructions.md`
 
 ## MCP Tools & External Knowledge
 - **Context 7:** ALWAYS use this to fetch docs for `chainlit` (v2.x changes rapidly) and `elevenlabs`.
@@ -56,20 +60,33 @@
 
 ## Agent Roles (Sub-agents)
 
-### 🕵️ QA Engineer (Frontend Tester)
+### 🕵️ UX Verifier (Frontend Tester)
+- **Location:** `.claude/agents/ux-verifier.md`
 - **Trigger:** Invoked when changes are made to `public/audio-control.js`, `app.py` (UI section), or `.chainlit/config.toml`.
-- **Tools:** Playwright (MCP).
-- **Mandatory Test Scenario (The "Push-to-Talk" Check):**
-  1. Open the app in a browser (headless or headed).
-  2. Wait for `audio-control.js` console logs ("Script loaded").
-  3. Verify the microphone button exists.
-  4. **Critical:** Simulate "Hold Click" on Mic -> Verify recording starts.
-  5. **Critical:** Simulate "Release Click" -> Verify recording stops and sends.
-  6. Ensure no auto-sending happens on silence before release.
+- **Tools:** Playwright (MCP), Axe Core accessibility testing.
+- **Responsibilities:**
+  - Verify WhatsApp-style chat layout (user right, assistant left)
+  - Test push-to-talk audio behavior (no auto-send on silence)
+  - Validate accessibility with Axe Core (WCAG 2.1 AA)
+  - Check responsive design (max-width: 800px)
+  - Generate ✅/❌ reports with specific fix suggestions
+- **Invocation:** `/invoke ux-verifier` or see `.claude/project_instructions.md`
+
+### 🔍 API Verifier (Backend Tester)
+- **Location:** `.claude/agents/api-verifier.md`
+- **Trigger:** Invoked when changes are made to `main.py`, `services.py`, `database.py`, or `docs/swagger.json`.
+- **Tools:** AJV (JSON Schema validator), OpenAPI 3.1 spec.
+- **Responsibilities:**
+  - Validate API responses against `docs/swagger.json`
+  - Test all endpoints (`/`, `/api/health`, `/api/translate`)
+  - Verify error handling (422, 500 responses)
+  - Check data types, required fields, constraints
+  - Generate ✅/❌ reports with specific fix suggestions
+- **Invocation:** `/invoke api-verifier` or see `.claude/project_instructions.md`
 
 ### 🏗️ Audio Expert (Frontend Audio)
 - **Focus:** `public/audio-control.js` logic and EngineIO settings.
-- **Rule:** Must coordinate with QA Engineer to verify fixes.
+- **Rule:** Must coordinate with UX Verifier to verify fixes.
 
 ### 🎓 Tutor Logic (Backend)
 - **Focus:** `services.py`, `config.py` (Prompts).
