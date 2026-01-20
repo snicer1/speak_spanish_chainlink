@@ -105,6 +105,22 @@
     }
 
     /**
+     * Style explanation blocks (mother tongue explanations for corrections)
+     */
+    function styleExplanationBlocks() {
+        const steps = document.querySelectorAll('.step:not([data-step-type="user_message"])');
+        steps.forEach(step => {
+            const paragraphs = step.querySelectorAll('.prose p');
+            paragraphs.forEach(p => {
+                if (p.textContent.includes('📝') && !p.classList.contains('explanation-block')) {
+                    p.classList.add('explanation-block');
+                    log('Styled explanation block:', p.textContent.substring(0, 50));
+                }
+            });
+        });
+    }
+
+    /**
      * Initialize MutationObserver to watch for new messages and fix their styles
      */
     function initStyleObserver() {
@@ -129,7 +145,10 @@
             
             if (shouldFix) {
                 // Small delay to let Chainlit finish rendering
-                setTimeout(fixMessageBubbleStyles, 50);
+                setTimeout(() => {
+                    fixMessageBubbleStyles();
+                    styleExplanationBlocks();
+                }, 50);
             }
         }, 100));
 
@@ -140,9 +159,18 @@
         });
 
         // Initial fix
-        setTimeout(fixMessageBubbleStyles, 500);
-        setTimeout(fixMessageBubbleStyles, 1000);
-        setTimeout(fixMessageBubbleStyles, 2000);
+        setTimeout(() => {
+            fixMessageBubbleStyles();
+            styleExplanationBlocks();
+        }, 500);
+        setTimeout(() => {
+            fixMessageBubbleStyles();
+            styleExplanationBlocks();
+        }, 1000);
+        setTimeout(() => {
+            fixMessageBubbleStyles();
+            styleExplanationBlocks();
+        }, 2000);
 
         log('Style observer initialized');
     }
@@ -188,7 +216,7 @@
                     attributeFilter: ['class', 'aria-label', 'disabled', 'data-recording']
                 });
 
-                button.addEventListener('click', (e) => {
+                button.addEventListener('click', () => {
                     log('[Audio Control] Button clicked');
                 }, true);
             });

@@ -524,3 +524,14 @@ pre {
         padding: 6px;
     }
 }
+
+/* ===== MOTHER TONGUE EXPLANATION BLOCKS ===== */
+/* Highlight explanations in native language for mistake corrections */
+.explanation-block {
+    display: block;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 193, 7, 0.12);
+    border-left: 3px solid #ffc107;
+    border-radius: 0 8px 8px 0;
+}
