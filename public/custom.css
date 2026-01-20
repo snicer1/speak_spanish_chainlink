@@ -354,3 +354,173 @@ pre {
     border-radius: 8px !important;
     padding: 12px !important;
 }
+
+/* ===== TRANSLATION PANEL (Message Box Integration) ===== */
+
+/* Toggle button inside toolbar */
+.translation-toggle-inline {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.translation-toggle-inline:hover {
+    opacity: 1;
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.translation-toggle-inline.active {
+    opacity: 1;
+    background: rgba(102, 126, 234, 0.3);
+}
+
+/* Expandable translation panel */
+.translation-panel {
+    width: 100%;
+    background: var(--chat-bg-secondary);
+    border: 1px solid var(--chat-assistant-border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    max-height: 280px;
+}
+
+.translation-panel.collapsed {
+    height: 0;
+    margin-bottom: 0;
+    border: none;
+    opacity: 0;
+    max-height: 0;
+}
+
+/* Panel header with direction indicator */
+.translation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--chat-assistant-border);
+}
+
+.translation-direction {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--chat-text-secondary);
+    font-family: monospace;
+}
+
+.translation-swap {
+    background: transparent;
+    border: none;
+    color: var(--chat-text-secondary);
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.translation-swap:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--chat-accent-start);
+}
+
+/* Translation input inside panel */
+.translation-panel .translation-input {
+    width: 100%;
+    padding: 12px 14px !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--chat-assistant-border) !important;
+    border-radius: 0 !important;
+    color: var(--chat-text-primary) !important;
+    font-size: 14px !important;
+}
+
+.translation-panel .translation-input::placeholder {
+    color: var(--chat-text-muted) !important;
+}
+
+.translation-panel .translation-input:focus {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom-color: var(--chat-accent-start) !important;
+    outline: none !important;
+}
+
+/* Translation output */
+.translation-panel .translation-output {
+    padding: 12px 14px;
+    color: var(--chat-text-secondary);
+    font-size: 14px;
+    min-height: 40px;
+    line-height: 1.5;
+}
+
+.translation-panel .translation-output:empty::before {
+    content: 'Translation will appear here...';
+    color: var(--chat-text-muted);
+    font-style: italic;
+}
+
+/* Copy button row */
+.translation-panel .translation-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--chat-assistant-border);
+}
+
+.translation-panel .translation-copy {
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid var(--chat-accent-start);
+    color: var(--chat-accent-start);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.translation-panel .translation-copy:hover {
+    background: rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive adjustments for translation panel */
+@media (max-width: 768px) {
+    .translation-panel {
+        margin-bottom: 10px;
+    }
+
+    .translation-panel .translation-output {
+        min-height: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .translation-header {
+        padding: 8px 12px;
+    }
+
+    .translation-panel .translation-input {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+    }
+
+    .translation-panel .translation-output {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .translation-toggle-inline {
+        font-size: 18px;
+        padding: 6px;
+    }
+}

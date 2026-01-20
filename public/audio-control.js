@@ -412,6 +412,460 @@
         }
     }
 
+    // ===== TRANSLATION WIDGET =====
+
+    /**
+     * Translation Widget State & Configuration
+     */
+    const TranslationWidget = {
+        state: {
+            targetLanguage: 'ES',      // DeepL code for target language
+            motherTongue: 'EN',         // DeepL code for mother tongue
+            direction: 'forward',       // 'forward' (mother → target) or 'reverse' (target → mother)
+            isExpanded: false,
+            debounceTimer: null
+        },
+        elements: {
+            toggleButton: null,
+            widget: null,
+            input: null,
+            output: null,
+            directionIndicator: null
+        }
+    };
+
+    /**
+     * Load translation preferences from localStorage
+     */
+    function loadTranslationPreferences() {
+        const stored = localStorage.getItem('translation_prefs');
+        if (stored) {
+            try {
+                const prefs = JSON.parse(stored);
+                TranslationWidget.state.targetLanguage = prefs.targetLanguage || 'ES';
+                TranslationWidget.state.motherTongue = prefs.motherTongue || 'EN';
+                TranslationWidget.state.direction = prefs.direction || 'forward';
+                log('Translation preferences loaded:', prefs);
+            } catch (e) {
+                log('Error loading translation preferences:', e);
+            }
+        }
+    }
+
+    /**
+     * Save translation preferences to localStorage
+     */
+    function saveTranslationPreferences() {
+        const prefs = {
+            targetLanguage: TranslationWidget.state.targetLanguage,
+            motherTongue: TranslationWidget.state.motherTongue,
+            direction: TranslationWidget.state.direction
+        };
+        localStorage.setItem('translation_prefs', JSON.stringify(prefs));
+        log('Translation preferences saved:', prefs);
+    }
+
+    /**
+     * Fetch language configuration from backend
+     */
+    async function fetchLanguageConfig() {
+        try {
+            const response = await fetch('http://localhost:8000/api/language-config');
+            if (!response.ok) throw new Error('Failed to fetch language config');
+            const config = await response.json();
+
+            // Set defaults if not already set
+            if (!localStorage.getItem('translation_prefs')) {
+                TranslationWidget.state.targetLanguage = config.target_languages[config.defaults.target_language]?.deepl_code || 'ES';
+                TranslationWidget.state.motherTongue = config.mother_tongues[config.defaults.mother_tongue]?.deepl_code || 'EN';
+                saveTranslationPreferences();
+            }
+
+            log('Language config fetched:', config);
+            return config;
+        } catch (e) {
+            log('Error fetching language config:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Get current translation direction and languages
+     */
+    function getTranslationDirection() {
+        if (TranslationWidget.state.direction === 'forward') {
+            return {
+                from: TranslationWidget.state.motherTongue,
+                to: TranslationWidget.state.targetLanguage,
+                label: `${TranslationWidget.state.motherTongue} → ${TranslationWidget.state.targetLanguage}`
+            };
+        } else {
+            return {
+                from: TranslationWidget.state.targetLanguage,
+                to: TranslationWidget.state.motherTongue,
+                label: `${TranslationWidget.state.targetLanguage} → ${TranslationWidget.state.motherTongue}`
+            };
+        }
+    }
+
+    /**
+     * Fetch translation from API
+     */
+    async function fetchTranslation(text, targetLang) {
+        if (!text || !text.trim()) return '';
+
+        try {
+            const response = await fetch(`http://localhost:8000/api/translate?text=${encodeURIComponent(text)}&target_lang=${targetLang}`);
+            if (!response.ok) throw new Error('Translation failed');
+
+            const data = await response.json();
+            return data.translation;
+        } catch (e) {
+            log('Translation error:', e);
+            return 'Translation error';
+        }
+    }
+
+    /**
+     * Handle translation input with debouncing
+     */
+    function handleTranslationInput() {
+        const input = TranslationWidget.elements.input;
+        const output = TranslationWidget.elements.output;
+
+        if (!input || !output) return;
+
+        // Clear previous timer
+        if (TranslationWidget.state.debounceTimer) {
+            clearTimeout(TranslationWidget.state.debounceTimer);
+        }
+
+        const text = input.value.trim();
+
+        if (!text) {
+            output.textContent = '';
+            return;
+        }
+
+        // Show loading indicator
+        output.textContent = 'Translating...';
+        output.style.opacity = '0.6';
+
+        // Debounce translation
+        TranslationWidget.state.debounceTimer = setTimeout(async () => {
+            const direction = getTranslationDirection();
+            const translation = await fetchTranslation(text, direction.to);
+
+            output.textContent = translation;
+            output.style.opacity = '1';
+        }, 300);
+    }
+
+    /**
+     * Toggle translation direction
+     */
+    function toggleTranslationDirection() {
+        TranslationWidget.state.direction =
+            TranslationWidget.state.direction === 'forward' ? 'reverse' : 'forward';
+
+        saveTranslationPreferences();
+        updateDirectionIndicator();
+
+        // Re-translate if there's text
+        if (TranslationWidget.elements.input && TranslationWidget.elements.input.value.trim()) {
+            handleTranslationInput();
+        }
+    }
+
+    /**
+     * Update direction indicator text
+     */
+    function updateDirectionIndicator() {
+        if (TranslationWidget.elements.directionIndicator) {
+            const direction = getTranslationDirection();
+            TranslationWidget.elements.directionIndicator.textContent = direction.label;
+        }
+    }
+
+    /**
+     * Copy translation to clipboard
+     */
+    async function copyTranslation() {
+        const output = TranslationWidget.elements.output;
+        if (!output || !output.textContent) return;
+
+        try {
+            await navigator.clipboard.writeText(output.textContent);
+
+            // Show feedback
+            const originalText = output.textContent;
+            output.textContent = '✓ Copied!';
+            setTimeout(() => {
+                output.textContent = originalText;
+            }, 1500);
+        } catch (e) {
+            log('Copy failed:', e);
+        }
+    }
+
+    /**
+     * Toggle translation panel visibility
+     */
+    function toggleTranslationWidget() {
+        const panel = TranslationWidget.elements.widget;
+        const toggleButton = TranslationWidget.elements.toggleButton;
+
+        if (!panel) return;
+
+        TranslationWidget.state.isExpanded = !TranslationWidget.state.isExpanded;
+
+        if (TranslationWidget.state.isExpanded) {
+            panel.classList.remove('collapsed');
+            toggleButton?.classList.add('active');
+            // Focus input
+            setTimeout(() => {
+                if (TranslationWidget.elements.input) {
+                    TranslationWidget.elements.input.focus();
+                }
+            }, 100);
+        } else {
+            panel.classList.add('collapsed');
+            toggleButton?.classList.remove('active');
+        }
+    }
+
+    /**
+     * Find button toolbar in input container
+     */
+    function findButtonToolbar(inputContainer) {
+        // Look for the button toolbar (contains send button, mic button, etc.)
+        const possibleToolbars = [
+            inputContainer.querySelector('.flex.gap-2'),
+            inputContainer.querySelector('[class*="flex"][class*="gap"]'),
+            inputContainer.querySelector('div:has(button[type="submit"])')
+        ];
+
+        for (const toolbar of possibleToolbars) {
+            if (toolbar && toolbar.querySelector('button')) {
+                return toolbar;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Create translation widget UI (integrated into message box)
+     */
+    function createTranslationWidget() {
+        // Check if widget already exists
+        if (document.querySelector('.translation-panel')) {
+            log('Translation widget already exists');
+            return;
+        }
+
+        // Find the message box input container (look for the one with textarea)
+        const inputContainer = document.querySelector('.flex.flex-col.gap-2:has(textarea)') ||
+                              document.querySelector('[class*="flex"][class*="flex-col"]:has(textarea)');
+        if (!inputContainer) {
+            log('Input container not found - will retry later');
+            return;
+        }
+
+        // Create toggle button for toolbar (🌐)
+        const toggleButton = document.createElement('button');
+        toggleButton.className = 'translation-toggle-inline';
+        toggleButton.innerHTML = '🌐';
+        toggleButton.setAttribute('aria-label', 'Toggle translation helper');
+        toggleButton.addEventListener('click', toggleTranslationWidget);
+
+        // Create expandable translation panel
+        const panel = document.createElement('div');
+        panel.className = 'translation-panel collapsed';
+
+        // Header with direction and controls
+        const header = document.createElement('div');
+        header.className = 'translation-header';
+
+        const directionIndicator = document.createElement('span');
+        directionIndicator.className = 'translation-direction';
+        const direction = getTranslationDirection();
+        directionIndicator.textContent = direction.label;
+
+        const swapButton = document.createElement('button');
+        swapButton.className = 'translation-swap';
+        swapButton.innerHTML = '⇄';
+        swapButton.setAttribute('aria-label', 'Swap translation direction');
+        swapButton.addEventListener('click', toggleTranslationDirection);
+
+        header.appendChild(directionIndicator);
+        header.appendChild(swapButton);
+
+        // Input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'translation-input';
+        input.placeholder = 'Type to translate...';
+        input.addEventListener('input', handleTranslationInput);
+
+        // Output area
+        const output = document.createElement('div');
+        output.className = 'translation-output';
+        output.textContent = '';
+
+        // Actions (Copy button)
+        const actions = document.createElement('div');
+        actions.className = 'translation-actions';
+
+        const copyButton = document.createElement('button');
+        copyButton.className = 'translation-copy';
+        copyButton.innerHTML = '📋 Copy';
+        copyButton.addEventListener('click', copyTranslation);
+
+        actions.appendChild(copyButton);
+
+        // Assemble panel
+        panel.appendChild(header);
+        panel.appendChild(input);
+        panel.appendChild(output);
+        panel.appendChild(actions);
+
+        // Insert panel at top of input container
+        inputContainer.insertBefore(panel, inputContainer.firstChild);
+
+        // Insert toggle button into toolbar
+        const toolbar = findButtonToolbar(inputContainer);
+        if (toolbar) {
+            toolbar.insertBefore(toggleButton, toolbar.firstChild);
+            log('Toggle button inserted into toolbar');
+        } else {
+            // Fallback: append to input container if toolbar not found
+            inputContainer.insertBefore(toggleButton, panel);
+            log('Toggle button inserted as fallback');
+        }
+
+        // Store references
+        TranslationWidget.elements.toggleButton = toggleButton;
+        TranslationWidget.elements.widget = panel;
+        TranslationWidget.elements.input = input;
+        TranslationWidget.elements.output = output;
+        TranslationWidget.elements.directionIndicator = directionIndicator;
+
+        log('Translation widget created (inline mode)');
+    }
+
+    /**
+     * Handle keyboard shortcuts
+     */
+    function initTranslationKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift+T to open/focus translation widget
+            if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+                e.preventDefault();
+
+                if (!TranslationWidget.state.isExpanded) {
+                    toggleTranslationWidget();
+                } else if (TranslationWidget.elements.input) {
+                    TranslationWidget.elements.input.focus();
+                }
+            }
+        });
+
+        log('Translation keyboard shortcuts initialized');
+    }
+
+    /**
+     * Observe settings sync messages from backend
+     */
+    function initSettingsSyncObserver() {
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            // Look for elements with settings_sync metadata
+                            const checkForSettingsSync = (element) => {
+                                // Check if this element or its children contain settings sync data
+                                const metadataElements = element.querySelectorAll('[data-metadata]');
+
+                                metadataElements.forEach(metaEl => {
+                                    try {
+                                        const metadata = JSON.parse(metaEl.dataset.metadata || '{}');
+
+                                        if (metadata.type === 'settings_sync') {
+                                            log('Settings sync detected:', metadata);
+
+                                            // Update translation state
+                                            if (metadata.target_deepl_code) {
+                                                TranslationWidget.state.targetLanguage = metadata.target_deepl_code;
+                                            }
+                                            if (metadata.mother_deepl_code) {
+                                                TranslationWidget.state.motherTongue = metadata.mother_deepl_code;
+                                            }
+
+                                            saveTranslationPreferences();
+                                            updateDirectionIndicator();
+                                        }
+                                    } catch (e) {
+                                        // Not valid JSON or no metadata
+                                    }
+                                });
+                            };
+
+                            checkForSettingsSync(node);
+                        }
+                    }
+                }
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        log('Settings sync observer initialized');
+    }
+
+    /**
+     * Initialize translation widget
+     */
+    async function initTranslationWidget() {
+        log('Initializing translation widget...');
+
+        // Load preferences
+        loadTranslationPreferences();
+
+        // Fetch config from backend
+        await fetchLanguageConfig();
+
+        // Create UI with retry logic
+        const createWithRetry = (attempts = 0) => {
+            const inputContainer = document.querySelector('.flex.flex-col.gap-2:has(textarea)') ||
+                                  document.querySelector('[class*="flex"][class*="flex-col"]:has(textarea)');
+
+            if (inputContainer) {
+                createTranslationWidget();
+                log('Translation widget created successfully');
+            } else if (attempts < 10) {
+                log(`Input container not found, retry ${attempts + 1}/10`);
+                setTimeout(() => createWithRetry(attempts + 1), 500);
+            } else {
+                log('Failed to create translation widget after 10 attempts');
+            }
+        };
+
+        createWithRetry();
+
+        // Set up keyboard shortcuts
+        initTranslationKeyboardShortcuts();
+
+        // Set up settings sync observer
+        initSettingsSyncObserver();
+
+        log('Translation widget initialized');
+    }
+
     // ===== INITIALIZATION =====
 
     // Initialize audio control
@@ -433,6 +887,13 @@
         document.addEventListener('DOMContentLoaded', initStyleObserver);
     } else {
         initStyleObserver();
+    }
+
+    // Initialize translation widget
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTranslationWidget);
+    } else {
+        initTranslationWidget();
     }
 
     // Re-initialize on page navigation (for SPA)

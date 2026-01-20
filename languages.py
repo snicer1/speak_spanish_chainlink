@@ -74,7 +74,7 @@ MOTHER_TONGUES: Dict[str, Dict[str, str]] = {
     "english": {
         "name": "English",
         "code": "en",
-        "deepl_code": "EN"
+        "deepl_code": "EN-US"
     },
     "spanish": {
         "name": "Spanish",

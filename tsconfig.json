@@ -2,22 +2,31 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "types": ["node", "@playwright/test"]
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node", "@playwright/test", "@axe-core/playwright"]
   },
   "include": [
-    "tests/**/*",
+    "tests/**/*.ts",
+    "tests/**/*.spec.ts",
     "playwright.config.ts"
   ],
   "exclude": [
     "node_modules",
     "playwright-report",
-    "test-results"
+    "test-results",
+    "dist",
+    "build"
   ]
 }

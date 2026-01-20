@@ -72,6 +72,17 @@ async def on_chat_start():
         author=lang_config.tutor_name
     ).send()
 
+    # Emit initial settings to frontend for translation feature
+    mother_config = MOTHER_TONGUES[mother_tongue]
+    await cl.Message(
+        content="",
+        metadata={
+            "type": "settings_sync",
+            "target_deepl_code": lang_config.deepl_code,
+            "mother_deepl_code": mother_config["deepl_code"]
+        }
+    ).send()
+
 
 @cl.on_settings_update
 async def on_settings_update(settings):
@@ -108,6 +119,16 @@ async def on_settings_update(settings):
     await cl.Message(
         content=f"✅ Language settings updated!\n\n**Target Language:** {new_lang_config.name}\n**Mother Tongue:** {mother_config['name']}\n\nLet's continue practicing in {new_lang_config.name}!",
         author=new_lang_config.tutor_name
+    ).send()
+
+    # Emit updated settings to frontend for translation feature
+    await cl.Message(
+        content="",
+        metadata={
+            "type": "settings_sync",
+            "target_deepl_code": new_lang_config.deepl_code,
+            "mother_deepl_code": mother_config["deepl_code"]
+        }
     ).send()
 
 

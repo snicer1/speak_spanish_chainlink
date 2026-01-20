@@ -7,6 +7,7 @@ import logging
 import traceback
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import chainlit as cl
 from config import Config
@@ -61,6 +62,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Add CORS middleware to allow requests from Chainlit frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 async def root():
@@ -84,6 +94,38 @@ async def health_check():
         "database": db_status,
         "deepl_configured": bool(Config.DEEPL_API_KEY)
     }
+
+
+@app.get("/api/language-config")
+async def get_language_config():
+    """
+    Return available languages for frontend translation feature.
+
+    Returns:
+        JSON response with target languages, mother tongues, and default values
+    """
+    from languages import SUPPORTED_LANGUAGES, MOTHER_TONGUES
+
+    return JSONResponse(content={
+        "target_languages": {
+            k: {
+                "name": v.name,
+                "deepl_code": v.deepl_code
+            }
+            for k, v in SUPPORTED_LANGUAGES.items()
+        },
+        "mother_tongues": {
+            k: {
+                "name": v["name"],
+                "deepl_code": v["deepl_code"]
+            }
+            for k, v in MOTHER_TONGUES.items()
+        },
+        "defaults": {
+            "target_language": "spanish",
+            "mother_tongue": "english"
+        }
+    })
 
 
 @app.get("/api/translate")
