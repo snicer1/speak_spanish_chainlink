@@ -41,21 +41,25 @@ async def get_chat_completion(messages: list) -> str:
     return response.choices[0].message.content
 
 
-async def text_to_speech(text: str) -> bytes:
+async def text_to_speech(text: str, voice_id: Optional[str] = None) -> bytes:
     """
     Convert text to speech using ElevenLabs.
 
     Args:
         text: The text to convert to speech
+        voice_id: Optional ElevenLabs voice ID (defaults to Config.ELEVENLABS_VOICE_ID)
 
     Returns:
         Audio data as bytes (MP3 format)
     """
+    # Use provided voice_id or fall back to default
+    selected_voice_id = voice_id or Config.ELEVENLABS_VOICE_ID
+
     # ElevenLabs SDK 2.x uses text_to_speech.convert()
     # Returns an iterator of audio chunks
     audio_generator = elevenlabs_client.text_to_speech.convert(
         text=text,
-        voice_id=Config.ELEVENLABS_VOICE_ID,
+        voice_id=selected_voice_id,
         model_id=Config.ELEVENLABS_MODEL,
         output_format="mp3_44100_128"
     )
@@ -89,16 +93,16 @@ def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, channels: int = 1, sam
     return wav_buffer.read()
 
 
-async def speech_to_text(pcm_data: bytes) -> str:
+async def speech_to_text(pcm_data: bytes, language: str = "es") -> str:
     """
     Convert speech to text using OpenAI Whisper.
-    Forces Spanish language detection.
 
     Chainlit 2.x sends raw PCM audio data (16-bit, 24000 Hz, mono).
     We need to convert it to WAV format before sending to OpenAI.
 
     Args:
         pcm_data: Raw PCM audio data from Chainlit InputAudioChunk
+        language: Language code for Whisper (default: "es" for Spanish)
 
     Returns:
         Transcribed text
@@ -113,7 +117,7 @@ async def speech_to_text(pcm_data: bytes) -> str:
     response = await client.audio.transcriptions.create(
         model=Config.STT_MODEL,
         file=audio_file,
-        language="es"  # Force Spanish language detection
+        language=language
     )
     return response.text
 

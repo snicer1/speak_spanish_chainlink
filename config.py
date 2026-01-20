@@ -33,17 +33,9 @@ class Config:
     # Audio Settings
     USE_VAD = False  # CRITICAL: NO Voice Activity Detection - user speaks slowly
 
-    # System Prompt
-    SYSTEM_PROMPT = """You are a patient and encouraging Spanish tutor.
-Your student is learning Spanish and speaks slowly, so give them time and be supportive.
-
-Guidelines:
-- Respond in Spanish at an appropriate level for the learner
-- Correct mistakes gently and explain why
-- Encourage the student to keep practicing
-- Use simple vocabulary and grammar initially
-- Ask follow-up questions to keep the conversation going
-- Be patient and supportive"""
+    # Language Settings
+    DEFAULT_TARGET_LANGUAGE = "spanish"  # Default language to learn
+    DEFAULT_MOTHER_TONGUE = "english"    # Default native language
 
     # Session Settings
     MAX_HISTORY_MESSAGES = 20  # Maximum number of messages to keep in history
