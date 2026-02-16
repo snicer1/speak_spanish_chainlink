@@ -10,7 +10,7 @@ from engineio.payload import Payload
 Payload.max_decode_packets = 500
 
 import chainlit as cl
-from chainlit.input_widget import Select, TextInput
+from chainlit.input_widget import Select, TextInput, Slider
 from pathlib import Path
 from config import Config
 from services import get_chat_completion, text_to_speech, speech_to_text
@@ -30,6 +30,16 @@ def get_current_language_config():
     return SUPPORTED_LANGUAGES.get(target_language, SUPPORTED_LANGUAGES["spanish"])
 
 
+def get_voice_id_from_label(label: str, lang_config) -> str:
+    """Convert voice label back to voice ID."""
+    # Create reverse mapping: label -> voice_id
+    for voice_id, voice_label in lang_config.voices.items():
+        if voice_label == label:
+            return voice_id
+    # Fallback to default if not found
+    return lang_config.voice_id
+
+
 @cl.on_chat_start
 async def on_chat_start():
     """Initialize the chat session."""
@@ -42,7 +52,11 @@ async def on_chat_start():
     lang_config = get_current_language_config()
     target_language, mother_tongue = get_language_settings()
 
-    # Create ChatSettings with language selection dropdowns
+    # Set default voice and voice rate
+    cl.user_session.set("voice_id", lang_config.voice_id)
+    cl.user_session.set("voice_rate", 0)  # Store as numeric value for slider
+
+    # Create ChatSettings with language selection dropdowns and voice controls
     settings = await cl.ChatSettings(
         [
             Select(
@@ -56,6 +70,21 @@ async def on_chat_start():
                 label="Mother Tongue (Your Native Language)",
                 values=list(MOTHER_TONGUES.keys()),
                 initial_value=mother_tongue,
+            ),
+            Select(
+                id="voice",
+                label="Voice",
+                items=lang_config.voices,
+                initial_value=lang_config.voice_id,
+            ),
+            Slider(
+                id="voice_speed",
+                label="Voice Speed",
+                initial=0,
+                min=-50,
+                max=50,
+                step=10,
+                description="Adjust how fast the tutor speaks (-50% slower to +50% faster)"
             ),
             TextInput(
                 id="context",
@@ -99,6 +128,12 @@ async def on_settings_update(settings):
     new_target_language = settings.get("target_language")
     new_mother_tongue = settings.get("mother_tongue")
     new_context = settings.get("context", "")
+    new_voice = settings.get("voice")
+    new_voice_speed = settings.get("voice_speed", 0)
+
+    # Get current and new language configurations
+    current_target_language = cl.user_session.get("target_language")
+    new_lang_config = SUPPORTED_LANGUAGES[new_target_language]
 
     # Validation: Reject if target_language == mother_tongue
     if new_target_language == new_mother_tongue:
@@ -112,6 +147,62 @@ async def on_settings_update(settings):
     cl.user_session.set("target_language", new_target_language)
     cl.user_session.set("mother_tongue", new_mother_tongue)
     cl.user_session.set("context", new_context)
+    cl.user_session.set("voice_rate", new_voice_speed)
+
+    # If language changed, reset voice to new language's default and re-send settings
+    if new_target_language != current_target_language:
+        cl.user_session.set("voice_id", new_lang_config.voice_id)
+        # Convert the new_voice label to voice_id if provided
+        if new_voice:
+            actual_voice_id = get_voice_id_from_label(new_voice, new_lang_config)
+            cl.user_session.set("voice_id", actual_voice_id)
+
+        # Re-send ChatSettings with updated voice list for new language
+        mother_config = MOTHER_TONGUES[new_mother_tongue]
+        settings = await cl.ChatSettings(
+            [
+                Select(
+                    id="target_language",
+                    label="Target Language (Language to Learn)",
+                    values=list(SUPPORTED_LANGUAGES.keys()),
+                    initial_value=new_target_language,
+                ),
+                Select(
+                    id="mother_tongue",
+                    label="Mother Tongue (Your Native Language)",
+                    values=list(MOTHER_TONGUES.keys()),
+                    initial_value=new_mother_tongue,
+                ),
+                Select(
+                    id="voice",
+                    label="Voice",
+                    items=new_lang_config.voices,
+                    initial_value=new_lang_config.voice_id,
+                ),
+                Slider(
+                    id="voice_speed",
+                    label="Voice Speed",
+                    initial=new_voice_speed,
+                    min=-50,
+                    max=50,
+                    step=10,
+                    description="Adjust how fast the tutor speaks (-50% slower to +50% faster)"
+                ),
+                TextInput(
+                    id="context",
+                    label="Conversation Context (Optional)",
+                    initial=new_context,
+                    placeholder="e.g., phrasal verbs, travel vocabulary, job interview",
+                    description="Specify a topic to focus your learning session"
+                ),
+            ]
+        ).send()
+    else:
+        # Language didn't change, just update the voice if it changed
+        if new_voice:
+            # Convert voice label to voice_id
+            actual_voice_id = get_voice_id_from_label(new_voice, new_lang_config)
+            cl.user_session.set("voice_id", actual_voice_id)
 
     # Update system prompt in message history
     new_system_prompt = get_system_prompt(new_target_language, new_mother_tongue, new_context)
@@ -123,7 +214,6 @@ async def on_settings_update(settings):
     cl.user_session.set("message_history", message_history)
 
     # Get new language configuration
-    new_lang_config = SUPPORTED_LANGUAGES[new_target_language]
     mother_config = MOTHER_TONGUES[new_mother_tongue]
 
     # Notify user of language change
@@ -166,7 +256,13 @@ async def on_message(message: cl.Message):
 
         # Generate audio response with language-specific voice
         try:
-            audio_data = await text_to_speech(response_text, voice_id=lang_config.voice_id)
+            # Get voice settings from session
+            voice_id = cl.user_session.get("voice_id", lang_config.voice_id)
+            voice_rate_num = cl.user_session.get("voice_rate", 0)
+            # Convert numeric rate to edge-tts format string
+            voice_rate = f"{voice_rate_num:+d}%" if voice_rate_num != 0 else "+0%"
+
+            audio_data = await text_to_speech(response_text, voice_id=voice_id, rate=voice_rate)
 
             # Ensure public directory exists
             Path("public").mkdir(exist_ok=True)
@@ -265,7 +361,13 @@ async def on_audio_end():
 
             # Generate audio response with language-specific voice
             try:
-                audio_bytes = await text_to_speech(response_text, voice_id=lang_config.voice_id)
+                # Get voice settings from session
+                voice_id = cl.user_session.get("voice_id", lang_config.voice_id)
+                voice_rate_num = cl.user_session.get("voice_rate", 0)
+                # Convert numeric rate to edge-tts format string
+                voice_rate = f"{voice_rate_num:+d}%" if voice_rate_num != 0 else "+0%"
+
+                audio_bytes = await text_to_speech(response_text, voice_id=voice_id, rate=voice_rate)
 
                 # Ensure public directory exists
                 Path("public").mkdir(exist_ok=True)

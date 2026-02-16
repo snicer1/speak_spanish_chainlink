@@ -31,6 +31,7 @@ class Config:
     # Language Settings
     DEFAULT_TARGET_LANGUAGE = "spanish"  # Default language to learn
     DEFAULT_MOTHER_TONGUE = "english"    # Default native language
+    DEFAULT_VOICE_RATE = "+0%"           # Default voice speed (normal)
 
     # Session Settings
     MAX_HISTORY_MESSAGES = 20  # Maximum number of messages to keep in history

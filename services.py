@@ -38,13 +38,14 @@ async def get_chat_completion(messages: list) -> str:
     return response.choices[0].message.content
 
 
-async def text_to_speech(text: str, voice_id: Optional[str] = None) -> bytes:
+async def text_to_speech(text: str, voice_id: Optional[str] = None, rate: str = "+0%") -> bytes:
     """
     Convert text to speech using edge-tts (Microsoft Edge TTS).
 
     Args:
         text: The text to convert to speech
         voice_id: Optional edge-tts voice name (defaults to "es-ES-AlvaroNeural")
+        rate: Voice speed adjustment (e.g., "+0%", "+20%", "-30%")
 
     Returns:
         Audio data as bytes (MP3 format)
@@ -52,8 +53,8 @@ async def text_to_speech(text: str, voice_id: Optional[str] = None) -> bytes:
     # Use provided voice_id or fall back to default Spanish voice
     selected_voice = voice_id or "es-ES-AlvaroNeural"
 
-    # Create edge-tts communicator
-    communicate = edge_tts.Communicate(text, selected_voice)
+    # Create edge-tts communicator with rate parameter
+    communicate = edge_tts.Communicate(text, selected_voice, rate=rate)
 
     # Stream audio chunks and collect them
     audio_bytes = b""

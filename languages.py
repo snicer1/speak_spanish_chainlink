@@ -14,7 +14,8 @@ class LanguageConfig:
     code: str  # ISO 639-1 code
     whisper_code: str  # Whisper API language code
     deepl_code: str  # DeepL API language code
-    voice_id: str  # edge-tts voice name
+    voice_id: str  # edge-tts voice name (default voice)
+    voices: Dict[str, str]  # Available voices: {voice_id: display_label}
     tutor_name: str  # Name of the tutor in the language
     welcome_message: str  # Welcome message in the target language
 
@@ -26,7 +27,14 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="es",
         whisper_code="es",
         deepl_code="ES",
-        voice_id="es-ES-AlvaroNeural",  # edge-tts Spanish voice
+        voice_id="es-ES-ElviraNeural",  # edge-tts Spanish voice (default)
+        voices={
+            "es-ES-ElviraNeural": "Elvira (Spain, Female)",
+            "es-ES-AlvaroNeural": "Alvaro (Spain, Male)",
+            "es-ES-XimenaNeural": "Ximena (Spain, Female)",
+            "es-MX-DaliaNeural": "Dalia (Mexico, Female)",
+            "es-MX-JorgeNeural": "Jorge (Mexico, Male)"
+        },
         tutor_name="Profesor",
         welcome_message="¡Hola! Soy tu tutor de español. Haz clic en el micrófono para hablar, o escribe tu mensaje. ¡Vamos a practicar!"
     ),
@@ -35,7 +43,14 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="fr",
         whisper_code="fr",
         deepl_code="FR",
-        voice_id="fr-FR-DeniseNeural",  # edge-tts French voice
+        voice_id="fr-FR-DeniseNeural",  # edge-tts French voice (default)
+        voices={
+            "fr-FR-DeniseNeural": "Denise (France, Female)",
+            "fr-FR-HenriNeural": "Henri (France, Male)",
+            "fr-FR-EloiseNeural": "Eloise (France, Female)",
+            "fr-FR-RemyMultilingualNeural": "Remy (France, Male)",
+            "fr-FR-VivienneMultilingualNeural": "Vivienne (France, Female)"
+        },
         tutor_name="Professeur",
         welcome_message="Bonjour! Je suis votre tuteur de français. Cliquez sur le microphone pour parler, ou écrivez votre message. Pratiquons ensemble!"
     ),
@@ -44,7 +59,14 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="de",
         whisper_code="de",
         deepl_code="DE",
-        voice_id="de-DE-KatjaNeural",  # edge-tts German voice
+        voice_id="de-DE-KatjaNeural",  # edge-tts German voice (default)
+        voices={
+            "de-DE-KatjaNeural": "Katja (Germany, Female)",
+            "de-DE-ConradNeural": "Conrad (Germany, Male)",
+            "de-DE-AmalaNeural": "Amala (Germany, Female)",
+            "de-DE-KillianNeural": "Killian (Germany, Male)",
+            "de-DE-FlorianMultilingualNeural": "Florian (Germany, Male)"
+        },
         tutor_name="Lehrer",
         welcome_message="Hallo! Ich bin dein Deutschlehrer. Klicke auf das Mikrofon zum Sprechen oder schreibe deine Nachricht. Lass uns üben!"
     ),
@@ -53,7 +75,13 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="it",
         whisper_code="it",
         deepl_code="IT",
-        voice_id="it-IT-ElsaNeural",  # edge-tts Italian voice
+        voice_id="it-IT-ElsaNeural",  # edge-tts Italian voice (default)
+        voices={
+            "it-IT-ElsaNeural": "Elsa (Italy, Female)",
+            "it-IT-DiegoNeural": "Diego (Italy, Male)",
+            "it-IT-IsabellaNeural": "Isabella (Italy, Female)",
+            "it-IT-GiuseppeMultilingualNeural": "Giuseppe (Italy, Male)"
+        },
         tutor_name="Insegnante",
         welcome_message="Ciao! Sono il tuo insegnante di italiano. Clicca sul microfono per parlare, o scrivi il tuo messaggio. Pratichiamo!"
     ),
@@ -62,7 +90,14 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="pt",
         whisper_code="pt",
         deepl_code="PT-PT",
-        voice_id="pt-PT-RaquelNeural",  # edge-tts Portuguese voice
+        voice_id="pt-PT-RaquelNeural",  # edge-tts Portuguese voice (default)
+        voices={
+            "pt-PT-RaquelNeural": "Raquel (Portugal, Female)",
+            "pt-PT-DuarteNeural": "Duarte (Portugal, Male)",
+            "pt-BR-FranciscaNeural": "Francisca (Brazil, Female)",
+            "pt-BR-AntonioNeural": "Antonio (Brazil, Male)",
+            "pt-BR-ThalitaMultilingualNeural": "Thalita (Brazil, Female)"
+        },
         tutor_name="Professor",
         welcome_message="Olá! Sou o seu professor de português. Clique no microfone para falar, ou escreva a sua mensagem. Vamos praticar!"
     )
