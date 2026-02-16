@@ -14,7 +14,7 @@ class LanguageConfig:
     code: str  # ISO 639-1 code
     whisper_code: str  # Whisper API language code
     deepl_code: str  # DeepL API language code
-    voice_id: str  # ElevenLabs voice ID
+    voice_id: str  # edge-tts voice name
     tutor_name: str  # Name of the tutor in the language
     welcome_message: str  # Welcome message in the target language
 
@@ -26,7 +26,7 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="es",
         whisper_code="es",
         deepl_code="ES",
-        voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel voice
+        voice_id="es-ES-AlvaroNeural",  # edge-tts Spanish voice
         tutor_name="Profesor",
         welcome_message="¡Hola! Soy tu tutor de español. Haz clic en el micrófono para hablar, o escribe tu mensaje. ¡Vamos a practicar!"
     ),
@@ -35,7 +35,7 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="fr",
         whisper_code="fr",
         deepl_code="FR",
-        voice_id="EXAVITQu4vr4xnSDxMaL",  # Bella voice
+        voice_id="fr-FR-DeniseNeural",  # edge-tts French voice
         tutor_name="Professeur",
         welcome_message="Bonjour! Je suis votre tuteur de français. Cliquez sur le microphone pour parler, ou écrivez votre message. Pratiquons ensemble!"
     ),
@@ -44,7 +44,7 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="de",
         whisper_code="de",
         deepl_code="DE",
-        voice_id="pNInz6obpgDQGcFmaJgB",  # Adam voice
+        voice_id="de-DE-KatjaNeural",  # edge-tts German voice
         tutor_name="Lehrer",
         welcome_message="Hallo! Ich bin dein Deutschlehrer. Klicke auf das Mikrofon zum Sprechen oder schreibe deine Nachricht. Lass uns üben!"
     ),
@@ -53,7 +53,7 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="it",
         whisper_code="it",
         deepl_code="IT",
-        voice_id="yoZ06aMxZJJ28mfd3POQ",  # Sam voice
+        voice_id="it-IT-ElsaNeural",  # edge-tts Italian voice
         tutor_name="Insegnante",
         welcome_message="Ciao! Sono il tuo insegnante di italiano. Clicca sul microfono per parlare, o scrivi il tuo messaggio. Pratichiamo!"
     ),
@@ -62,7 +62,7 @@ SUPPORTED_LANGUAGES: Dict[str, LanguageConfig] = {
         code="pt",
         whisper_code="pt",
         deepl_code="PT-PT",
-        voice_id="jsCqWAovK2LkecY7zXl4",  # Fin voice
+        voice_id="pt-PT-RaquelNeural",  # edge-tts Portuguese voice
         tutor_name="Professor",
         welcome_message="Olá! Sou o seu professor de português. Clique no microfone para falar, ou escreva a sua mensagem. Vamos praticar!"
     )
@@ -99,13 +99,14 @@ MOTHER_TONGUES: Dict[str, Dict[str, str]] = {
 }
 
 
-def get_system_prompt(target_lang: str, mother_tongue: str) -> str:
+def get_system_prompt(target_lang: str, mother_tongue: str, context: str = "") -> str:
     """
     Generate a dynamic system prompt based on target language and mother tongue.
 
     Args:
         target_lang: The language the user wants to learn (e.g., "spanish")
         mother_tongue: The user's native language (e.g., "english")
+        context: Optional topic focus for the conversation (e.g., "phrasal verbs")
 
     Returns:
         A customized system prompt for the language tutor
@@ -121,7 +122,7 @@ def get_system_prompt(target_lang: str, mother_tongue: str) -> str:
     target_lang_name = target_config.name
     mother_lang_name = mother_config["name"]
 
-    return f"""You are a patient and encouraging {target_lang_name} tutor.
+    prompt = f"""You are a patient and encouraging {target_lang_name} tutor.
 Your student is learning {target_lang_name} and speaks slowly, so give them time and be supportive.
 The student's native language is {mother_lang_name}.
 
@@ -138,3 +139,15 @@ Guidelines:
 - Ask follow-up questions to keep the conversation going
 - Be patient and supportive
 - Adapt your responses to match the student's proficiency level"""
+
+    # Add context section if provided
+    if context and context.strip():
+        prompt += f"""
+
+FOCUS TOPIC: The student wants to learn about "{context.strip()}".
+- Steer conversations towards this topic when natural
+- Use vocabulary and examples related to this topic
+- Create practice scenarios involving this topic
+- If the student diverges, gently bring the conversation back to this focus"""
+
+    return prompt

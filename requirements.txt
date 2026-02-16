@@ -4,8 +4,8 @@ chainlit>=2.3.0
 # OpenAI SDK
 openai>=2.15.0
 
-# ElevenLabs TTS
-elevenlabs>=2.30.0
+# edge-tts (Microsoft Edge TTS - Free)
+edge-tts>=7.0.0
 
 # Configuration
 python-dotenv>=1.2.0

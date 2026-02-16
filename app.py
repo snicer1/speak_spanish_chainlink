@@ -10,7 +10,7 @@ from engineio.payload import Payload
 Payload.max_decode_packets = 500
 
 import chainlit as cl
-from chainlit.input_widget import Select
+from chainlit.input_widget import Select, TextInput
 from pathlib import Path
 from config import Config
 from services import get_chat_completion, text_to_speech, speech_to_text
@@ -36,6 +36,7 @@ async def on_chat_start():
     # Set default language settings
     cl.user_session.set("target_language", Config.DEFAULT_TARGET_LANGUAGE)
     cl.user_session.set("mother_tongue", Config.DEFAULT_MOTHER_TONGUE)
+    cl.user_session.set("context", "")
 
     # Get language configuration
     lang_config = get_current_language_config()
@@ -56,11 +57,19 @@ async def on_chat_start():
                 values=list(MOTHER_TONGUES.keys()),
                 initial_value=mother_tongue,
             ),
+            TextInput(
+                id="context",
+                label="Conversation Context (Optional)",
+                initial="",
+                placeholder="e.g., phrasal verbs, travel vocabulary, job interview",
+                description="Specify a topic to focus your learning session"
+            ),
         ]
     ).send()
 
     # Initialize message history with dynamic system prompt
-    system_prompt = get_system_prompt(target_language, mother_tongue)
+    context = cl.user_session.get("context", "")
+    system_prompt = get_system_prompt(target_language, mother_tongue, context)
     cl.user_session.set("message_history", [
         {"role": "system", "content": system_prompt}
     ])
@@ -89,6 +98,7 @@ async def on_settings_update(settings):
     """Handle language settings updates."""
     new_target_language = settings.get("target_language")
     new_mother_tongue = settings.get("mother_tongue")
+    new_context = settings.get("context", "")
 
     # Validation: Reject if target_language == mother_tongue
     if new_target_language == new_mother_tongue:
@@ -101,9 +111,10 @@ async def on_settings_update(settings):
     # Update session settings
     cl.user_session.set("target_language", new_target_language)
     cl.user_session.set("mother_tongue", new_mother_tongue)
+    cl.user_session.set("context", new_context)
 
     # Update system prompt in message history
-    new_system_prompt = get_system_prompt(new_target_language, new_mother_tongue)
+    new_system_prompt = get_system_prompt(new_target_language, new_mother_tongue, new_context)
     message_history = cl.user_session.get("message_history", [])
     if message_history and message_history[0]["role"] == "system":
         message_history[0]["content"] = new_system_prompt

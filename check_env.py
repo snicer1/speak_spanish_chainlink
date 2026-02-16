@@ -22,10 +22,11 @@ def check_env():
     print("\n1. Environment Variables:")
     required_vars = {
         "OPENAI_API_KEY": "OpenAI API (for chat and speech-to-text)",
-        "ELEVENLABS_API_KEY": "ElevenLabs API (for text-to-speech)",
         "DEEPL_API_KEY": "DeepL API (for translation)",
         "MONGODB_URL": "MongoDB connection URL"
     }
+
+    print("  ℹ️  edge-tts is free - no API key required")
 
     for var, description in required_vars.items():
         value = os.getenv(var)

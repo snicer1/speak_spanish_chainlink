@@ -162,10 +162,58 @@ html {
     padding: 20px 24px !important;
 }
 
-/* ===== HIDE THINKING STEP ===== */
-#step-Thinking,
-p[id^="step-"][id*="hinking"] {
+/* ===== HIDE THINKING STEP TEXT (keep container for skeleton) ===== */
+#step-Thinking > *:not(.skeleton-loader),
+p[id^="step-"][id*="hinking"] > *:not(.skeleton-loader) {
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ===== HIDE INITIAL LOADING STATUS ===== */
+/* Hide "Loading response..." status that appears on page load */
+status[role="status"] {
     display: none !important;
+}
+
+/* Hide standalone loading/thinking steps */
+.step:has(status[role="status"]):not(:has(.prose)):not(:has(article)) {
+    display: none !important;
+}
+
+/* ===== SKELETON LOADER ===== */
+.skeleton-loader {
+    display: none !important; /* Hide skeleton loaders - they're annoying */
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 20px;
+    background: var(--chat-assistant-bg, #1e293b);
+    border: 1px solid var(--chat-assistant-border, rgba(71, 85, 105, 0.5));
+    border-radius: 16px 16px 16px 4px;
+    max-width: 300px;
+    min-width: 200px;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        rgba(100, 116, 139, 0.2) 25%,
+        rgba(100, 116, 139, 0.4) 50%,
+        rgba(100, 116, 139, 0.2) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+}
+
+.skeleton-line:nth-child(1) { width: 85%; }
+.skeleton-line:nth-child(2) { width: 70%; }
+.skeleton-line:nth-child(3) { width: 60%; }
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 /* ===== AUDIO PLAYER ===== */

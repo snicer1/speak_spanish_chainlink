@@ -267,17 +267,27 @@
             '.overflow-y-auto'
         ];
 
+        // First try to find a scrollable container
         for (const selector of selectors) {
             const container = document.querySelector(selector);
             if (container && container.scrollHeight > container.clientHeight) {
-                log('Found chat container with selector:', selector);
+                log('Found scrollable chat container:', selector);
+                return container;
+            }
+        }
+
+        // Fallback: find any matching container (even if not scrollable yet)
+        for (const selector of selectors) {
+            const container = document.querySelector(selector);
+            if (container) {
+                log('Found chat container (not yet scrollable):', selector);
                 return container;
             }
         }
 
         const main = document.querySelector('main');
         if (main) {
-            const scrollable = main.querySelector('[style*="overflow"]') || 
+            const scrollable = main.querySelector('[style*="overflow"]') ||
                               main.querySelector('.overflow-auto') ||
                               main.querySelector('.overflow-y-auto');
             if (scrollable) {
@@ -288,6 +298,57 @@
 
         log('Chat container not found');
         return null;
+    }
+
+    function hasRealContent(element) {
+        if (!element || element.offsetParent === null) return false;
+        if (element.classList?.contains('skeleton-loader')) return false;
+
+        const textContent = element.textContent?.trim();
+
+        // Ignore "Thinking" text variations - they're just placeholders
+        if (textContent && textContent.includes('Thinking')) return false;
+
+        if (textContent && textContent.length > 0) return true;
+        if (element.querySelector('audio')) return true;
+
+        const prose = element.querySelector('.prose');
+        return prose && prose.textContent?.trim().length > 0;
+    }
+
+    function createSkeletonLoader() {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton-loader';
+        skeleton.setAttribute('aria-label', 'Loading response...');
+        skeleton.setAttribute('role', 'status');
+
+        for (let i = 0; i < 3; i++) {
+            const line = document.createElement('div');
+            line.className = 'skeleton-line';
+            skeleton.appendChild(line);
+        }
+        return skeleton;
+    }
+
+    function initLoadingObserver() {
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList') {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const step = node.classList?.contains('step') ? node : node.querySelector?.('.step');
+                            if (step && !hasRealContent(step) && !step.querySelector('.skeleton-loader')) {
+                                const container = step.querySelector('.rounded-2xl, .rounded-xl') || step;
+                                container.appendChild(createSkeletonLoader());
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        log('Loading observer initialized');
+        return observer;
     }
 
     function scrollToBottom(container, smooth = true) {
@@ -320,29 +381,36 @@
         if (!container) return;
 
         const observer = new MutationObserver(throttle((mutations) => {
-            let hasNewContent = false;
+            let hasNewRealContent = false;
 
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                     for (const node of mutation.addedNodes) {
                         if (node.nodeType === Node.ELEMENT_NODE) {
-                            if (node.classList?.contains('step') || 
-                                node.querySelector?.('.step') ||
-                                node.classList?.contains('message') ||
-                                node.querySelector?.('.message')) {
-                                hasNewContent = true;
+                            const step = node.classList?.contains('step') ? node : node.querySelector?.('.step');
+                            if (step && hasRealContent(step)) {
+                                hasNewRealContent = true;
+                                // Remove skeleton if present
+                                const skeleton = step.querySelector('.skeleton-loader');
+                                if (skeleton) skeleton.remove();
                                 break;
                             }
                         }
                     }
                 }
-                
-                if (mutation.type === 'characterData') {
-                    hasNewContent = true;
+
+                if (mutation.type === 'characterData' && mutation.target.textContent?.trim()) {
+                    hasNewRealContent = true;
                 }
             }
 
-            if (hasNewContent && isNearBottom(container)) {
+            // Clean up all skeletons when new real content appears
+            if (hasNewRealContent) {
+                const allSkeletons = container.querySelectorAll('.skeleton-loader');
+                allSkeletons.forEach(skeleton => skeleton.remove());
+            }
+
+            if (hasNewRealContent && isNearBottom(container)) {
                 setTimeout(() => scrollToBottom(container), CONFIG.scrollDelay);
             }
         }, CONFIG.observerThrottle));
@@ -353,7 +421,7 @@
             characterData: true
         });
 
-        log('Message observer initialized');
+        log('Smart message observer initialized');
         return observer;
     }
 
@@ -922,6 +990,13 @@
         document.addEventListener('DOMContentLoaded', initTranslationWidget);
     } else {
         initTranslationWidget();
+    }
+
+    // Initialize loading/skeleton observer
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLoadingObserver);
+    } else {
+        initLoadingObserver();
     }
 
     // Re-initialize on page navigation (for SPA)

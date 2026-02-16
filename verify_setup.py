@@ -35,10 +35,10 @@ def verify_imports():
         return False
 
     try:
-        import elevenlabs
-        print("  ✅ elevenlabs")
+        import edge_tts
+        print("  ✅ edge-tts")
     except ImportError as e:
-        print(f"  ❌ elevenlabs: {e}")
+        print(f"  ❌ edge-tts: {e}")
         return False
 
     try:
@@ -69,7 +69,6 @@ def verify_environment():
     print("\nChecking environment variables...")
 
     openai_key = os.getenv("OPENAI_API_KEY")
-    elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
 
     all_present = True
 
@@ -79,11 +78,7 @@ def verify_environment():
         print(f"  ❌ OPENAI_API_KEY is not set")
         all_present = False
 
-    if elevenlabs_key:
-        print(f"  ✅ ELEVENLABS_API_KEY is set")
-    else:
-        print(f"  ❌ ELEVENLABS_API_KEY is not set")
-        all_present = False
+    print(f"  ℹ️  edge-tts is free - no API key required")
 
     return all_present
 
@@ -97,8 +92,6 @@ def verify_config():
         print("  ✅ Config class loads successfully")
         print(f"  ✅ Chat Model: {Config.CHAT_MODEL}")
         print(f"  ✅ STT Model: {Config.STT_MODEL}")
-        print(f"  ✅ ElevenLabs Voice: {Config.ELEVENLABS_VOICE_ID}")
-        print(f"  ✅ ElevenLabs Model: {Config.ELEVENLABS_MODEL}")
         return True
     except Exception as e:
         print(f"  ❌ Config error: {e}")

@@ -6,7 +6,7 @@ Pure logic with no UI code - all Chainlit decorators are in app.py.
 import wave
 from io import BytesIO
 from openai import AsyncOpenAI
-from elevenlabs.client import ElevenLabs
+import edge_tts
 from config import Config
 import deepl
 from typing import Optional
@@ -14,9 +14,6 @@ from typing import Optional
 
 # Initialize OpenAI client
 client = AsyncOpenAI(api_key=Config.OPENAI_API_KEY)
-
-# Initialize ElevenLabs client
-elevenlabs_client = ElevenLabs(api_key=Config.ELEVENLABS_API_KEY)
 
 # Initialize DeepL translator (will be None if API key not set)
 deepl_translator = None
@@ -43,29 +40,27 @@ async def get_chat_completion(messages: list) -> str:
 
 async def text_to_speech(text: str, voice_id: Optional[str] = None) -> bytes:
     """
-    Convert text to speech using ElevenLabs.
+    Convert text to speech using edge-tts (Microsoft Edge TTS).
 
     Args:
         text: The text to convert to speech
-        voice_id: Optional ElevenLabs voice ID (defaults to Config.ELEVENLABS_VOICE_ID)
+        voice_id: Optional edge-tts voice name (defaults to "es-ES-AlvaroNeural")
 
     Returns:
         Audio data as bytes (MP3 format)
     """
-    # Use provided voice_id or fall back to default
-    selected_voice_id = voice_id or Config.ELEVENLABS_VOICE_ID
+    # Use provided voice_id or fall back to default Spanish voice
+    selected_voice = voice_id or "es-ES-AlvaroNeural"
 
-    # ElevenLabs SDK 2.x uses text_to_speech.convert()
-    # Returns an iterator of audio chunks
-    audio_generator = elevenlabs_client.text_to_speech.convert(
-        text=text,
-        voice_id=selected_voice_id,
-        model_id=Config.ELEVENLABS_MODEL,
-        output_format="mp3_44100_128"
-    )
+    # Create edge-tts communicator
+    communicate = edge_tts.Communicate(text, selected_voice)
 
-    # Collect all audio chunks
-    audio_bytes = b"".join(audio_generator)
+    # Stream audio chunks and collect them
+    audio_bytes = b""
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_bytes += chunk["data"]
+
     return audio_bytes
 
 
